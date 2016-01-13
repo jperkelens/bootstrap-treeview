@@ -37,6 +37,7 @@
 		collapseIcon: 'glyphicon glyphicon-minus',
 		emptyIcon: 'glyphicon',
 		nodeIcon: 'glyphicon glyphicon-stop',
+		anySelectedIcon: 'glyphicon glyphicon-stop',
 		selectedIcon: 'glyphicon glyphicon-stop',
 
 		color: undefined, // '#000000',
@@ -452,6 +453,12 @@
 						.addClass(node.selectedIcon || _this.options.selectedIcon)
 					);
 			}
+      else if (node.state.anySelected) {
+				treeItem
+					.append($(_this.template.icon)
+						.addClass(node.anySelectedIcon || _this.options.anySelectedIcon)
+					);
+      }
 			else {
 				treeItem
 					.append($(_this.template.icon)
