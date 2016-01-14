@@ -39,6 +39,7 @@
 		nodeIcon: 'glyphicon glyphicon-stop',
 		anySelectedIcon: 'glyphicon glyphicon-stop',
 		selectedIcon: 'glyphicon glyphicon-stop',
+    anySelectedStyle: "color: cadetblue;",
 
 		color: undefined, // '#000000',
 		backColor: undefined, // '#FFFFFF',
@@ -55,6 +56,7 @@
 		showBorder: true,
 		showTags: false,
 		multiSelect: false,
+    strictClickArea: true,
 
 		// Event handlers
 		onNodeCollapsed: undefined,
@@ -285,17 +287,22 @@
 		var classList = target.attr('class') ? target.attr('class').split(' ') : [];
 		var node = this.findNode(target);
 
-		if ((classList.indexOf('click-expand') != -1) ||
-				(classList.indexOf('click-collapse') != -1)) {
-			this.toggleExpandedState(node, _default.options);
-		}
-		else if (node) {
-			if (node.selectable) {
-				this.toggleSelectedState(node, _default.options);
-			} else {
-				this.toggleExpandedState(node, _default.options);
-			}
-		}
+    if ((classList.indexOf('click-expand') != -1) ||
+        (classList.indexOf('click-collapse') != -1)) {
+      this.toggleExpandedState(node, _default.options);
+    }
+    else {
+      if (this.options.strictClickArea) {
+        if(node && node.selectable && classList.indexOf('click-toggle-select') != -1)
+          this.toggleSelectedState(node, _default.options);
+      } else {
+        if (node && node.selectable) {
+          this.toggleSelectedState(node, _default.options);
+        } else {
+          this.toggleExpandedState(node, _default.options);
+        }
+      }
+    }
 	};
 
 	// Looks up the DOM for the closest parent list item to retrieve the
@@ -367,6 +374,12 @@
 
 			// Continue selecting node
 			node.state.selected = true;
+      var parent = this.getParent(node.nodeId)
+      while(!!parent) {
+        parent.state.anySelected = true
+        parent = this.getParent(parent.nodeId)
+      }
+
 			if (!options.silent) {
 				this.$element.trigger('nodeSelected', $.extend(true, {}, node) );
 			}
@@ -375,6 +388,22 @@
 
 			// Unselect node
 			node.state.selected = false;
+      var parent = this.getParent(node.nodeId),
+          sibs = parent && parent.nodes,
+          any = false
+
+      while(!!parent) {
+        for (var i = 0; i < sibs.length; i++) {
+          any = sibs[i].state.selected || sibs[i].state.anySelected
+          if (any) break;
+        }
+
+        parent.state.anySelected = any
+        parent = this.getParent(parent.nodeId)
+        sibs = parent && parent.nodes
+        any = false
+      }
+
 			if (!options.silent) {
 				this.$element.trigger('nodeUnselected', $.extend(true, {}, node) );
 			}
@@ -451,18 +480,22 @@
 				treeItem
 					.append($(_this.template.icon)
 						.addClass(node.selectedIcon || _this.options.selectedIcon)
+						.addClass('click-toggle-select')
 					);
 			}
       else if (node.state.anySelected) {
 				treeItem
 					.append($(_this.template.icon)
 						.addClass(node.anySelectedIcon || _this.options.anySelectedIcon)
+            .attr('style', node.anySelectedStyle || _this.options.anySelectedStyle)
+						.addClass('click-toggle-select')
 					);
       }
 			else {
 				treeItem
 					.append($(_this.template.icon)
 						.addClass(node.icon || _this.options.nodeIcon)
+            .addClass('click-toggle-select')
 					);
 			}
 
